@@ -1,5 +1,3 @@
 functions:
   teste-teste:
-    handler: src/index.handler
-  test-test:
-    handler: lib/index.handler
+    handler: mocks/teste/teste2/teste3/test.handler
