@@ -1,0 +1,5 @@
+functions:
+  teste-teste:
+    handler: src/index.handler
+  test-test:
+    handler: lib/index.handler
