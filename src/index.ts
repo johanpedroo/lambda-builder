@@ -1,15 +1,15 @@
 #!/usr/bin/env node
 
-import { Command } from "commander";
-import { fileSync as findSync } from "find";
-import fs from "fs";
-import path from "path";
-import YAML from "yaml";
 // @ts-ignore
 import ncc from "@vercel/ncc";
-import mkdirp from "mkdirp";
 import Zip from "adm-zip";
+import { Command } from "commander";
 import Del from "del";
+import { fileSync as findSync } from "find";
+import fs from "fs";
+import mkdirp from "mkdirp";
+import path from "path";
+import YAML from "yaml";
 
 const program = new Command();
 
@@ -33,7 +33,7 @@ const parsedYaml = YAML.parse(fileYml);
 
 function parsePathHandler(handler: string) {
   const { dir, name } = path.parse(handler);
-  const extensions = /\.[t|j]s$/;
+  const extensions = /(\/index)?\.[t|j]s$/;
   const regexFileName = new RegExp(name + extensions.source);
   const [existsFile] = findSync(regexFileName, dir);
   if (!existsFile) throw new Error("File not Exists");
