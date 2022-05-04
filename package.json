@@ -1,15 +1,15 @@
 {
-  "name": "lambda-builder",
-  "version": "1.0.0",
+  "name": "sls-lambda-builder",
+  "version": "0.0.3",
   "description": "",
   "main": "./lib/index.js",
+  "private": false,
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "format": "prettier --write \"src/**/*.ts\" \"src/**/*.js\"",
     "lint": "tslint -p tsconfig.json",
     "build": "tsc",
-    "prepublishOnly": "tsc",
-    "postinstall": "tsc"
+    "prepublishOnly": "tsc"
   },
   "keywords": [],
   "author": "",

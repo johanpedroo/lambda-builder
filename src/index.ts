@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import { Command } from "commander";
 import { fileSync as findSync } from "find";
 import fs from "fs";
@@ -7,12 +9,12 @@ import YAML from "yaml";
 import ncc from "@vercel/ncc";
 import mkdirp from "mkdirp";
 import Zip from "adm-zip";
-import Del from "del"
+import Del from "del";
 
 const program = new Command();
 
 program
-  .option("-o, --output <path>", "output path", 'dist')
+  .option("-o, --output <path>", "output path", "dist")
   .option("-f, --file <path>", "file path")
   .option("-i, --individually", "build individually lambdas")
   .option("-z, --zip", "zip build")
@@ -22,17 +24,19 @@ program.parse();
 
 const options = program.opts();
 
-const fileYml = fs.readFileSync(path.resolve(process.cwd(), options.file), "utf8");
+const fileYml = fs.readFileSync(
+  path.resolve(process.cwd(), options.file),
+  "utf8"
+);
 
 const parsedYaml = YAML.parse(fileYml);
 
 function parsePathHandler(handler: string) {
-  const {dir, name} = path.parse(handler)
+  const { dir, name } = path.parse(handler);
   const extensions = /\.[t|j]s$/;
   const regexFileName = new RegExp(name + extensions.source);
-  const [existsFile] = findSync(regexFileName, dir)
-  if (!existsFile)
-    throw new Error('File not Exists')
+  const [existsFile] = findSync(regexFileName, dir);
+  if (!existsFile) throw new Error("File not Exists");
 
   return {
     filename: path.parse(existsFile).base,
@@ -42,22 +46,27 @@ function parsePathHandler(handler: string) {
 }
 
 function parseFunctionsObject(functionsObject: any) {
-  return Object.entries(functionsObject).filter(([_, props]) => !(props as any).ignore).map(([name, props]: any) => {
-    const {filePath, folderPath, filename} = parsePathHandler(props.handler)
-    return {
-      name,
-      filename,
-      folder: folderPath,
-      path: filePath,
-  }});
+  return Object.entries(functionsObject)
+    .filter(([_, props]) => !(props as any).ignore)
+    .map(([name, props]: any) => {
+      const { filePath, folderPath, filename } = parsePathHandler(
+        props.handler
+      );
+      return {
+        name,
+        filename,
+        folder: folderPath,
+        path: filePath,
+      };
+    });
 }
 
 async function buildFiles() {
-  const files = parseFunctionsObject(parsedYaml.functions)
+  const files = parseFunctionsObject(parsedYaml.functions);
 
-  mkdirp.sync(path.resolve(process.cwd(), options.output))
+  mkdirp.sync(path.resolve(process.cwd(), options.output));
 
-  Del.sync(options.output, {cwd: process.cwd()})
+  Del.sync(options.output, { cwd: process.cwd() });
 
   files.map(async (file) => {
     const build = await ncc(path.resolve(process.cwd(), file.path), {
@@ -70,46 +79,43 @@ async function buildFiles() {
       minify: true, // default
       sourceMap: false, // default
       assetBuilds: false, // default
-      sourceMapBasePrefix: '../', // default treats sources as output-relative
+      sourceMapBasePrefix: "../", // default treats sources as output-relative
       // when outputting a sourcemap, automatically include
       // source-map-support in the output file (increases output by 32kB).
       sourceMapRegister: false, // default
       watch: false, // default
-      license: '', // default does not generate a license file
+      license: "", // default does not generate a license file
       v8cache: false, // default
       quiet: false, // default
-      debugLog: false // default
-    })
+      debugLog: false, // default
+    });
 
+    const outputFolderArgs = [process.cwd(), options.output, file.folder];
 
-    const outputFolderArgs = [process.cwd(), options.output,  file.folder]
+    if (options.individually) outputFolderArgs.splice(2, 0, file.name);
 
-    if(options.individually)
-      outputFolderArgs.splice(2, 0, file.name)
+    const outputFolder = path.resolve(...outputFolderArgs);
+    const outputFilename = path.parse(file.filename).name + ".js";
 
-    const outputFolder = path.resolve(...outputFolderArgs)
-    const outputFilename = path.parse(file.filename).name + '.js'
+    mkdirp.sync(outputFolder);
 
-    mkdirp.sync(outputFolder)
+    fs.writeFileSync(path.resolve(outputFolder, outputFilename), build.code);
 
-    fs.writeFileSync(path.resolve(outputFolder, outputFilename), build.code)
+    if (options.zip && options.individually) {
+      const zip = new Zip();
 
-    if(options.zip && options.individually){
-      const zip = new Zip()
-
-
-      zip.addLocalFolder(path.resolve(options.output, file.name))
-      await zip.writeZipPromise(path.resolve(options.output,`${file.name}.zip`))
+      zip.addLocalFolder(path.resolve(options.output, file.name));
+      await zip.writeZipPromise(
+        path.resolve(options.output, `${file.name}.zip`)
+      );
     }
-  })
+  });
 }
 
 buildFiles().then(async () => {
-  if(options.zip && !options.individually){
-
-    const zip = new Zip()
-    zip.addLocalFolder(path.resolve(options.output))
-    await zip.writeZipPromise(path.resolve(options.output,'latest.zip'))
+  if (options.zip && !options.individually) {
+    const zip = new Zip();
+    zip.addLocalFolder(path.resolve(options.output));
+    await zip.writeZipPromise(path.resolve(options.output, "latest.zip"));
   }
-
-})
+});
