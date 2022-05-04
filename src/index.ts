@@ -86,7 +86,7 @@ async function buildFiles() {
       watch: false, // default
       license: "", // default does not generate a license file
       v8cache: false, // default
-      quiet: false, // default
+      quiet: true, // default
       debugLog: false, // default
     });
 
