@@ -14,11 +14,11 @@ import YAML from "yaml";
 const program = new Command();
 
 program
-  .option("-o, --output <path>", "output path", "dist")
+  .option("-o, --output <path>", "output path", "build")
   .option("-f, --file <path>", "file path")
   .option("-i, --individually", "build individually lambdas")
-  .option("-z, --zip", "zip build")
-  .option("-m, --map", "generate .map file");
+  .option("-z, --zip", "zip build");
+// .option("-m, --map", "generate .map file");
 
 program.parse();
 
@@ -40,8 +40,7 @@ function parsePathHandler(handler: string) {
 
   return {
     filename: path.parse(existsFile).base,
-    filePath: existsFile,
-    folderPath: dir,
+    folderPath: path.parse(existsFile).dir,
   };
 }
 
@@ -49,14 +48,11 @@ function parseFunctionsObject(functionsObject: any) {
   return Object.entries(functionsObject)
     .filter(([_, props]) => !(props as any).ignore)
     .map(([name, props]: any) => {
-      const { filePath, folderPath, filename } = parsePathHandler(
-        props.handler
-      );
+      const { folderPath, filename } = parsePathHandler(props.handler);
       return {
         name,
         filename,
         folder: folderPath,
-        path: filePath,
       };
     });
 }
@@ -68,8 +64,11 @@ async function buildFiles() {
 
   Del.sync(options.output, { cwd: process.cwd() });
 
-  files.map(async (file) => {
-    const build = await ncc(path.resolve(process.cwd(), file.path), {
+  mkdirp.sync(options.output);
+
+  for await (const file of files) {
+    console.info(file.name, "Start Build");
+    const build = await ncc(path.resolve(process.cwd(), file.folder), {
       externals: ["aws-sdk"],
       // provide a custom cache path or disable caching
       cache: false,
@@ -90,6 +89,8 @@ async function buildFiles() {
       debugLog: false, // default
     });
 
+    console.info(file.name, "Finish Build");
+
     const outputFolderArgs = [process.cwd(), options.output, file.folder];
 
     if (options.individually) outputFolderArgs.splice(2, 0, file.name);
@@ -109,7 +110,7 @@ async function buildFiles() {
         path.resolve(options.output, `${file.name}.zip`)
       );
     }
-  });
+  }
 }
 
 buildFiles().then(async () => {
