@@ -1,3 +1,5 @@
 functions:
-  teste-teste:
-    handler: mocks/teste/teste2/teste3/test.handler
+  test:
+    handler: mocks/test/test2/test3/test.handler
+  foo-bar:
+    handler: mocks/test/test2/test3.handler

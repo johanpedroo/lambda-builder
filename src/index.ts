@@ -68,26 +68,29 @@ async function buildFiles() {
 
   for await (const file of files) {
     console.info(file.name, "Start Build");
-    const build = await ncc(path.resolve(process.cwd(), file.folder), {
-      externals: ["aws-sdk"],
-      // provide a custom cache path or disable caching
-      cache: false,
-      // externals to leave as requires of the build
-      // directory outside of which never to emit assets
-      filterAssetBase: process.cwd(), // default
-      minify: true, // default
-      sourceMap: false, // default
-      assetBuilds: false, // default
-      sourceMapBasePrefix: "../", // default treats sources as output-relative
-      // when outputting a sourcemap, automatically include
-      // source-map-support in the output file (increases output by 32kB).
-      sourceMapRegister: false, // default
-      watch: false, // default
-      license: "", // default does not generate a license file
-      v8cache: false, // default
-      quiet: true, // default
-      debugLog: false, // default
-    });
+    const build = await ncc(
+      path.resolve(process.cwd(), file.folder, file.filename),
+      {
+        externals: ["aws-sdk"],
+        // provide a custom cache path or disable caching
+        cache: false,
+        // externals to leave as requires of the build
+        // directory outside of which never to emit assets
+        filterAssetBase: process.cwd(), // default
+        minify: true, // default
+        sourceMap: false, // default
+        assetBuilds: false, // default
+        sourceMapBasePrefix: "../", // default treats sources as output-relative
+        // when outputting a sourcemap, automatically include
+        // source-map-support in the output file (increases output by 32kB).
+        sourceMapRegister: false, // default
+        watch: false, // default
+        license: "", // default does not generate a license file
+        v8cache: false, // default
+        quiet: true, // default
+        debugLog: false, // default
+      }
+    );
 
     console.info(file.name, "Finish Build");
 
