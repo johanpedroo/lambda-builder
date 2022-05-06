@@ -2,4 +2,4 @@ functions:
   test:
     handler: mocks/test/test2/test3/test.handler
   foo-bar:
-    handler: mocks/test/test2/test3.handler
+    handler: mocks/test/test2.handler
