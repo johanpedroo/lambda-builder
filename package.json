@@ -1,6 +1,6 @@
 {
-  "name": "sls-lambda-builder",
-  "version": "0.0.8",
+  "name": "lambda-builder",
+  "version": "0.0.9",
   "description": "",
   "main": "./lib/index.js",
   "private": false,
