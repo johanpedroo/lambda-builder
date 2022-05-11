@@ -3,21 +3,26 @@
 // @ts-ignore
 import ncc from '@vercel/ncc';
 import Zip from 'adm-zip';
+import convert from 'bytes';
+import chalk from 'chalk';
 import { Command } from 'commander';
 import Del from 'del';
-import { fileSync as findSync } from 'find';
+import findPkg from 'find';
 import fs from 'fs';
+import log from 'log-update';
 import mkdirp from 'mkdirp';
 import path from 'path';
 import YAML from 'yaml';
 
+const { fileSync: findSync } = findPkg;
 const program = new Command();
 
 program
   .option('-o, --output <path>', 'output path', 'build')
   .option('-f, --file <path>', 'file path')
   .option('-i, --individually', 'build individually lambdas')
-  .option('-z, --zip', 'zip build');
+  .option('-z, --zip', 'zip build')
+  .option('-t, --target <es>', 'ES version target', 'es2019');
 
 program.parse();
 
@@ -34,7 +39,8 @@ function parsePathHandler(handler: string) {
   const { dir, name } = path.parse(handler);
   const extensions = /(\/index)?\.(ts|js)/;
   const regexFileName = new RegExp(name + extensions.source, '');
-  const existsFile = findSync(regexFileName, dir)?.[0] || findSync( extensions, path.join(dir, name))?.[0];
+  const existsFile = findSync(regexFileName, dir)?.[0]
+    || findSync(extensions, path.join(dir, name))?.[0];
   if (!existsFile) throw new Error('File not Exists');
 
   return {
@@ -45,7 +51,7 @@ function parsePathHandler(handler: string) {
 
 function parseFunctionsObject(functionsObject: any) {
   return Object.entries(functionsObject)
-    .filter(([_, props]) => !(props as any).ignore)
+    .filter(([, props]) => !(props as any).ignore)
     .map(([name, props]: any) => {
       const { folderPath, filename } = parsePathHandler(props.handler);
       return {
@@ -65,8 +71,9 @@ async function buildFiles() {
 
   mkdirp.sync(options.output);
 
+  // eslint-disable-next-line no-restricted-syntax
   for await (const file of files) {
-    console.info(file.name, 'Start Build');
+    log(file.name, chalk.black.bgYellow('Start Build'));
     const build = await ncc(
       path.resolve(process.cwd(), file.folder, file.filename),
       {
@@ -88,11 +95,21 @@ async function buildFiles() {
         v8cache: false, // default
         quiet: true, // default
         debugLog: false, // default
-        target: 'es2020',
+        target: options.target,
       },
     );
 
-    console.info(file.name, 'Finish Build');
+    log(file.name, chalk.black.bgGreen('Finish Build'));
+    log.done();
+
+    log(
+      file.name,
+      chalk.black.bgBlue(
+        'Size',
+        convert(build.stats.compilation.assets['index.js']._size),
+      ),
+    );
+    log.done();
 
     const outputFolderArgs = [process.cwd(), options.output, file.folder];
 
@@ -103,7 +120,11 @@ async function buildFiles() {
 
     mkdirp.sync(outputFolder);
 
-    fs.writeFileSync(path.resolve(outputFolder, outputFilename), build.code);
+    const outputPathWithFilename = path.resolve(outputFolder, outputFilename);
+
+    // log(file.name, fs.statSync(outputPathWithFilename).size);
+
+    fs.writeFileSync(outputPathWithFilename, build.code);
 
     if (options.zip && options.individually) {
       const zip = new Zip();

@@ -1,8 +1,9 @@
 {
   "name": "lambda-builder",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "description": "",
   "main": "./lib/index.js",
+  "type": "module",
   "private": false,
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -16,6 +17,7 @@
   "license": "ISC",
   "devDependencies": {
     "@types/adm-zip": "^0.5.0",
+    "@types/bytes": "^3.1.1",
     "@types/find": "^0.2.1",
     "@types/mkdirp": "^1.0.2",
     "@types/node": "^17.0.31",
@@ -36,10 +38,12 @@
   "dependencies": {
     "@vercel/ncc": "^0.33.4",
     "adm-zip": "^0.5.9",
-    "chalk": "^5.0.1",
+    "bytes": "^3.1.2",
+    "chalk": "^4.1.2",
     "commander": "^9.2.0",
     "del": "^6.0.0",
     "find": "^0.3.0",
+    "log-update": "^5.0.1",
     "mkdirp": "^1.0.4",
     "yaml": "^2.0.1"
   },
