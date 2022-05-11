@@ -3,7 +3,7 @@
 // @ts-ignore
 import ncc from '@vercel/ncc';
 import Zip from 'adm-zip';
-import convert from 'bytes';
+import bytes from 'bytes';
 import chalk from 'chalk';
 import { Command } from 'commander';
 import Del from 'del';
@@ -102,15 +102,6 @@ async function buildFiles() {
     log(file.name, chalk.black.bgGreen('Finish Build'));
     log.done();
 
-    log(
-      file.name,
-      chalk.black.bgBlue(
-        'Size',
-        convert(build.stats.compilation.assets['index.js']._size),
-      ),
-    );
-    log.done();
-
     const outputFolderArgs = [process.cwd(), options.output, file.folder];
 
     if (options.individually) outputFolderArgs.splice(2, 0, file.name);
@@ -126,6 +117,15 @@ async function buildFiles() {
 
     fs.writeFileSync(outputPathWithFilename, build.code);
 
+    log(
+      file.name,
+      chalk.black.bgBlue(
+        'Size',
+        bytes(fs.statSync(outputPathWithFilename).size),
+      ),
+    );
+    log.done();
+
     if (options.zip && options.individually) {
       const zip = new Zip();
 
@@ -133,6 +133,15 @@ async function buildFiles() {
       await zip.writeZipPromise(
         path.resolve(options.output, `${file.name}.zip`),
       );
+
+      log(
+        file.name,
+        chalk.black.bgBlueBright(
+          'Size zipped',
+          bytes(fs.statSync(path.resolve(options.output, `${file.name}.zip`)).size),
+        ),
+      );
+      log.done();
     }
   }
 }
