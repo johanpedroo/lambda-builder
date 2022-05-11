@@ -150,6 +150,15 @@ buildFiles().then(async () => {
   if (options.zip && !options.individually) {
     const zip = new Zip();
     zip.addLocalFolder(path.resolve(options.output));
-    await zip.writeZipPromise(path.resolve(options.output, 'latest.zip'));
+    const outputZip = path.resolve(options.output, 'latest.zip');
+    await zip.writeZipPromise(outputZip);
+    log(
+      'latest.zip',
+      chalk.black.bgBlueBright(
+        'Size',
+        bytes(fs.statSync(outputZip).size),
+      ),
+    );
+    log.done();
   }
 });
