@@ -22,6 +22,8 @@ program
   .option('-f, --file <path>', 'file path')
   .option('-i, --individually', 'build individually lambdas')
   .option('-z, --zip', 'zip build')
+  .option('-s, --source-map', 'enable source map file')
+  .option('-m, --minify', 'enable minify file')
   .option('-t, --target <es>', 'ES version target', 'es2019');
 
 program.parse();
@@ -71,6 +73,7 @@ async function buildFiles() {
 
   mkdirp.sync(options.output);
 
+
   // eslint-disable-next-line no-restricted-syntax
   for await (const file of files) {
     log(file.name, chalk.black.bgYellow('Start Build'));
@@ -83,13 +86,13 @@ async function buildFiles() {
         // externals to leave as requires of the build
         // directory outside of which never to emit assets
         filterAssetBase: process.cwd(), // default
-        minify: true, // default
-        sourceMap: false, // default
+        minify: options.minify, // default
+        sourceMap: options.sourceMap, // default
         assetBuilds: false, // default
         sourceMapBasePrefix: '../', // default treats sources as output-relative
         // when outputting a sourcemap, automatically include
         // source-map-support in the output file (increases output by 32kB).
-        sourceMapRegister: false, // default
+        sourceMapRegister: true, // default
         watch: false, // default
         license: '', // default does not generate a license file
         v8cache: false, // default
@@ -98,6 +101,8 @@ async function buildFiles() {
         target: options.target,
       },
     );
+    log(JSON.stringify(build.assets[Object.keys(build.assets)[1]].source.data))
+    log.done();
 
     log(file.name, chalk.black.bgGreen('Finish Build'));
     log.done();
@@ -113,10 +118,10 @@ async function buildFiles() {
 
     const outputPathWithFilename = path.resolve(outputFolder, outputFilename);
 
-    // log(file.name, fs.statSync(outputPathWithFilename).size);
-
     fs.writeFileSync(outputPathWithFilename, build.code);
-
+    if(options.sourceMap) {
+      fs.writeFileSync(outputPathWithFilename + '.map', build.assets[Object.keys(build.assets)[0]]?.source)
+    }
     log(
       file.name,
       chalk.black.bgBlue(
