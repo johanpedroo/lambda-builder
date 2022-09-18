@@ -1,5 +1,5 @@
 functions:
   test:
-    handler: test/test2/test3/test.handler
+    handler: ./test/test2/test3/test.handler
   foo-bar:
-    handler: test/test2.handler
+    handler: ./test/test2.handler

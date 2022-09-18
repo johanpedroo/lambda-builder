@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 // @ts-ignore
-import ncc from '@vercel/ncc';
+import ncc from 'lambda-builder-ncc';
 import Zip from 'adm-zip';
 import bytes from 'bytes';
 import chalk from 'chalk';
@@ -13,6 +13,11 @@ import log from 'log-update';
 import mkdirp from 'mkdirp';
 import path from 'path';
 import YAML from 'yaml';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const { fileSync: findSync } = findPkg;
 const program = new Command();
@@ -39,10 +44,11 @@ const parsedYaml = YAML.parse(fileYml);
 
 function parsePathHandler(handler: string) {
   const { dir, name } = path.parse(handler);
+  const { dir: dirFile } = path.parse(options.file);
   const extensions = /(\/index)?\.(ts|js)/;
   const regexFileName = new RegExp(name + extensions.source, '');
   const existsFile = findSync(regexFileName, dir)?.[0]
-    || findSync(extensions, path.join(dir, name))?.[0];
+    || findSync(extensions, path.resolve(dir, name))?.[0];
   if (!existsFile) throw new Error('File not Exists');
 
   return {
@@ -69,7 +75,7 @@ async function buildFiles() {
 
   mkdirp.sync(path.resolve(process.cwd(), options.output));
 
-  Del.sync(options.output, { cwd: process.cwd() });
+  Del.sync(path.resolve(__dirname, options.output), { cwd: process.cwd(), force: true });
 
   mkdirp.sync(options.output);
 
@@ -84,7 +90,7 @@ async function buildFiles() {
         // provide a custom cache path or disable caching
         cache: false,
         // externals to leave as requires of the build
-        // directory outside of which never to emit assets
+        // directory outside which never to emit assets
         filterAssetBase: process.cwd(), // default
         minify: options.minify, // default
         sourceMap: options.sourceMap, // default

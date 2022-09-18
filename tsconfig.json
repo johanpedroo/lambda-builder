@@ -6,7 +6,9 @@
     "outDir": "./lib",
     "strict": true,
     "esModuleInterop": true,
-    "moduleResolution": "node"
+    "moduleResolution": "Node",
+    "sourceMap": true,
+    "allowJs": true,
   },
   "include": [
     "src"
